@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -43,8 +42,7 @@ func createReport(checklists checklists) report {
 		message := f.FieldByName("comment").String()
 		if message != "" {
 			list := "<li>" + message + "</li>"
-			fmt.Println(list)
-			messages = append(messages, "<li>"+message+"</li>")
+			messages = append(messages, list)
 		}
 
 		status := f.FieldByName("status").Bool()
