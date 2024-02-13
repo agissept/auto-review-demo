@@ -14,9 +14,12 @@ import (
 
 func main() {
 	c := newChecklists()
-	studentId := 1234567
 
-	submissionPath, _ := getParams()
+	submissionPath, reportPath := getParams()
+
+	config := getAutoReviewConfig(submissionPath)
+	studentId := config.SubmitterId
+
 	projectPath, packageJsonExists := getProjectPath(submissionPath)
 	c.packageJsonExists = packageJsonExists
 
@@ -49,7 +52,7 @@ func main() {
 	}
 
 	stopServer()
-	generateReport(c)
+	generateReport(c, reportPath, config.Username)
 }
 
 func getProjectPath(submissionPath string) (*string, checklist) {

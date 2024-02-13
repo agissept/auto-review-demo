@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -82,4 +83,26 @@ func stopServer() {
 		unhandledException(err)
 	}
 	fmt.Println("Server stopped")
+}
+
+type autoReviewConfig struct {
+	SubmitterId int    `json:"submitter_id"`
+	Username    string `json:"submitter_name"`
+}
+
+func getAutoReviewConfig(submissionPath string) autoReviewConfig {
+	configPath := filepath.Join(submissionPath, "auto-review-config.json")
+	config, err := os.ReadFile(configPath)
+	if err != nil {
+		unhandledException(err)
+	}
+
+	var autoReviewConfig autoReviewConfig
+
+	err = json.Unmarshal(config, &autoReviewConfig)
+	if err != nil {
+		unhandledException(err)
+	}
+
+	return autoReviewConfig
 }
