@@ -5,13 +5,14 @@ type checklist struct {
 	comment string
 }
 
+//goland:noinspection ALL
 type checklists struct {
-	packageJsonExists                 checklist
-	mainJsExists                      checklist
-	mainJsHaveStudentIdComment        checklist
-	rootShowingHtml                   checklist
-	serveInPort5000                   checklist
-	htmlContainH1ElementWithStudentId checklist
+	packageJsonExists                 checklist `json:"package_json_exists"`
+	mainJsExists                      checklist `json:"main_js_exists"`
+	mainJsHaveStudentIdComment        checklist `json:"main_js_have_student_id_comment"`
+	rootShowingHtml                   checklist `json:"root_showing_html"`
+	serveInPort5000                   checklist `json:"serve_in_port_5000"`
+	htmlContainH1ElementWithStudentId checklist `json:"html_contain_h_1_element_with_student_id"`
 }
 
 func newChecklists() checklists {

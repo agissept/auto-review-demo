@@ -1,17 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
-	"time"
 )
 
 func findFile(submissionPath string, fileName string) (*string, error) {
@@ -64,7 +63,6 @@ func runMainJs(fileJsPath string) {
 	if err := cmd.Start(); err != nil {
 		unhandledException(err)
 	}
-	waitUntilServerUp()
 }
 
 func unhandledException(err error) {
@@ -80,29 +78,6 @@ func unhandledException(err error) {
 	os.Exit(1)
 }
 
-func waitUntilServerUp() {
-	host := "localhost"
-	port := "5000"
-	timeout := time.Second * 3
-
-	var i int
-	for start := time.Now(); ; {
-		if i%10 == 0 {
-			conn, _ := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
-			if conn != nil {
-				conn.Close()
-				fmt.Println("Port 5000 is running")
-				break
-			}
-			if time.Since(start) > timeout {
-				fmt.Println("Port 5000 is not running")
-				break
-			}
-		}
-		i++
-	}
-}
-
 func stopServer() {
 	err := exec.Command("bash", "-c", "kill -9 $(lsof -t -i:5000)").Start()
 	if err != nil {
@@ -112,47 +87,46 @@ func stopServer() {
 }
 
 type report struct {
-	checklistsCompleted []string
-	message             string
+	ChecklistsCompleted []string `json:"checklists_completed"`
+	Message             string   `json:"message"`
 }
 
 func generateReport(c checklists) {
 	var messages []string
+	var checklistCompleted []string
 	fields := reflect.VisibleFields(reflect.TypeOf(c))
 	r := reflect.ValueOf(c)
 
 	for _, field := range fields {
 		f := reflect.Indirect(r).FieldByName(field.Name)
-		messages = append(messages, f.FieldByName("comment").String())
+		message := f.FieldByName("comment").String()
+		if message != "" {
+			list := "<li>" + message + "</li>"
+			fmt.Println(list)
+			messages = append(messages, "<li>"+message+"</li>")
+		}
+
+		status := f.FieldByName("status").Bool()
+		if status {
+			checklistCompleted = append(checklistCompleted, field.Tag.Get("json"))
+		}
+
 	}
 
-	fmt.Println(messages)
+	messageString := strings.Join(messages, "")
 
-	//fmt.Println(v)
+	report := report{
+		ChecklistsCompleted: checklistCompleted,
+		Message:             messageString,
+	}
 
-	//var report report
-	//if checklists.packageJsonExists.status {
-	//	report.checklistsCompleted = append(report.checklistsCompleted, "package_json_exist")
-	//}
-	//
-	//if checklists.mainJsExists.status {
-	//	report.checklistsCompleted = append(report.checklistsCompleted, "main_js_exist")
-	//}
-	//
-	//if checklists.serveInPort5000.status {
-	//	report.checklistsCompleted = append(report.checklistsCompleted, "using_port_5000")
-	//}
-	//
-	//if checklists.rootShowingHtml.status {
-	//	report.checklistsCompleted = append(report.checklistsCompleted, "root_show_html")
-	//}
-	//
-	//if checklists.htmlContainH1ElementWithStudentId.status {
-	//	report.checklistsCompleted = append(report.checklistsCompleted, "html_contain_h1_element")
-	//}
-	//
-	//if checklists.mainJsHaveStudentIdComment.status {
-	//	report.checklistsCompleted = append(report.checklistsCompleted, "main_js_contain_student_id")
-	//}
+	reportJson, err := json.Marshal(report)
+	if err != nil {
+		unhandledException(err)
+	}
 
+	err = os.WriteFile("report.json", reportJson, os.ModePerm)
+	if err != nil {
+		unhandledException(err)
+	}
 }

@@ -1,12 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -25,12 +28,19 @@ func main() {
 
 		if fileJsPath != nil {
 			runMainJs(*fileJsPath)
-			html, rootShowingHtml := rootIsServingHtml()
-			c.rootShowingHtml = rootShowingHtml
 
-			if html != nil {
-				c.htmlContainH1ElementWithStudentId = h1ElementIsCorrect(studentId, *html)
+			isServerUp := waitUntilServerUp()
+			c.serveInPort5000 = isServerUp
+
+			if isServerUp.status == true {
+				html, rootShowingHtml := rootIsServingHtml()
+				c.rootShowingHtml = rootShowingHtml
+
+				if html != nil {
+					c.htmlContainH1ElementWithStudentId = h1ElementIsCorrect(studentId, *html)
+				}
 			}
+
 		}
 	}
 
@@ -125,5 +135,29 @@ func h1ElementIsCorrect(studentId int, html string) checklist {
 	return checklist{
 		status:  false,
 		comment: "Kami tidak bisa menemukan user id " + strconv.Itoa(studentId) + " di url root pada aplikasi yang kamu buat",
+	}
+}
+
+func waitUntilServerUp() checklist {
+	host := "localhost"
+	port := "5000"
+	timeout := time.Second * 3
+
+	var i int
+	for start := time.Now(); ; {
+		if i%10 == 0 {
+			conn, _ := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
+			if conn != nil {
+				conn.Close()
+				fmt.Println("Port 5000 is running")
+				return checklist{status: true}
+
+			}
+			if time.Since(start) > timeout {
+				fmt.Println("Port 5000 is not running")
+				return checklist{status: false, comment: "Kami tidak bisa mendeteksi port 5000 setelah aplikasi dijalankan, mohon periksa kembali apakah port yang kamu gunakan adalah 5000"}
+			}
+		}
+		i++
 	}
 }
