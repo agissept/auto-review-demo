@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -78,8 +77,6 @@ func save(report report, reportPath string) {
 	if err != nil {
 		unhandledException(err)
 	}
-
-	fmt.Print(buf.String())
 
 	err = os.WriteFile(reportPath+"/report.json", buf.Bytes(), os.ModePerm)
 	if err != nil {
