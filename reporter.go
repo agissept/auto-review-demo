@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -33,7 +34,8 @@ func isSubmissionApproved(report report) bool {
 
 func createReport(checklists checklists) report {
 	var messages []string
-	var checklistCompleted []string
+	var checklistCompleted = make([]string, 0)
+
 	fields := reflect.VisibleFields(reflect.TypeOf(checklists))
 	r := reflect.ValueOf(checklists)
 
@@ -51,7 +53,6 @@ func createReport(checklists checklists) report {
 		}
 
 	}
-
 	messageString := strings.Join(messages, "")
 
 	report := report{
@@ -77,6 +78,8 @@ func save(report report, reportPath string) {
 	if err != nil {
 		unhandledException(err)
 	}
+
+	fmt.Print(buf.String())
 
 	err = os.WriteFile(reportPath+"/report.json", buf.Bytes(), os.ModePerm)
 	if err != nil {
