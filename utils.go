@@ -44,6 +44,16 @@ func getParams() (string, string) {
 	reportPath := flag.String("report", "", "Specify report path")
 	flag.Parse()
 
+	if *submissionsPath == "" {
+		fmt.Println("submission path (-submission) tidak boleh kosong")
+		os.Exit(1)
+	}
+
+	if *reportPath == "" {
+		fmt.Println("report path (-report) tidak boleh kosong")
+		os.Exit(1)
+	}
+
 	return *submissionsPath, *reportPath
 }
 
